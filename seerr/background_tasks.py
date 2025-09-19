@@ -629,7 +629,8 @@ async def check_show_subscriptions():
                 filter_input.clear()
                 episode_filter = f"S{season_number:02d}{episode_id}"
                 full_filter = f"{TORRENT_FILTER_REGEX} {episode_filter}"
-                filter_input.send_keys(full_filter)
+                # filter_input.send_keys(full_filter)
+                driver.execute_script("arguments[0].value = arguments[1];",filter_input,full_filter)
                 logger.info(f"Applied filter: {full_filter}")
 
                 try:
@@ -720,7 +721,8 @@ async def check_show_subscriptions():
         try:
             filter_input = browser_driver.find_element(By.ID, "query")
             filter_input.clear()
-            filter_input.send_keys(TORRENT_FILTER_REGEX)
+            # filter_input.send_keys(TORRENT_FILTER_REGEX)
+            driver.execute_script("arguments[0].value = arguments[1];",filter_input,full_filter)
             logger.info(f"Reset filter to default: {TORRENT_FILTER_REGEX}")
         except NoSuchElementException:
             logger.warning("Could not reset filter to default using ID 'query'")
@@ -836,7 +838,8 @@ async def search_individual_episodes(imdb_id, movie_title, season_number, season
             filter_input.clear()
             episode_filter = f"S{season_number:02d}{episode_id}"  # e.g., "S01E01"
             full_filter = f"{TORRENT_FILTER_REGEX} {episode_filter}"
-            filter_input.send_keys(full_filter)
+            #filter_input.send_keys(full_filter)
+            driver.execute_script("arguments[0].value = arguments[1];",filter_input,full_filter)
             logger.info(f"Applied filter: {full_filter}")
             
             try:
@@ -848,7 +851,7 @@ async def search_individual_episodes(imdb_id, movie_title, season_number, season
 
             
             # Wait for results to update after applying the filter
-            time.sleep(2)  # Adjust this delay if needed based on page response time
+            time.sleep(5)  # Adjust this delay if needed based on page response time
             
             # First pass: Check for existing RD (100%) using check_red_buttons
             confirmation_flag, confirmed_seasons = check_red_buttons(
@@ -931,7 +934,8 @@ async def search_individual_episodes(imdb_id, movie_title, season_number, season
     try:
         filter_input = browser_driver.find_element(By.ID, "query")
         filter_input.clear()
-        filter_input.send_keys(TORRENT_FILTER_REGEX)
+        # filter_input.send_keys(TORRENT_FILTER_REGEX)
+        driver.execute_script("arguments[0].value = arguments[1];",filter_input,full_filter)
         logger.info(f"Reset filter to default: {TORRENT_FILTER_REGEX}")
     except NoSuchElementException:
         logger.warning("Could not reset filter to default using ID 'query'")
