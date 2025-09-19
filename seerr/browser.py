@@ -184,6 +184,7 @@ async def initialize_browser():
             logger.error(f"Failed to initialize Selenium WebDriver: {e}")
             driver = None  # Ensure driver is None on failure
             raise e
+        time.sleep(5)
 
         # If initialization succeeded, continue with setup
         if driver:
@@ -196,19 +197,20 @@ async def initialize_browser():
                     localStorage.setItem('rd:refreshToken', '"{RD_REFRESH_TOKEN}"');          
                 """)
                 logger.info("Set Real-Debrid credentials in local storage.")
+                time.sleep(5)
 
                 # Refresh the page to apply the local storage values
                 driver.refresh()
                 login(driver)
                 logger.info("Refreshed the page to apply local storage values.")
-                
+                driver.refresh()
                 # After successful login, click on "Settings" button
                 try:
                     logger.info("Attempting to click the 'Settings' button.")
                     settings_button = WebDriverWait(driver, 10).until(
                         EC.element_to_be_clickable((By.XPATH, "//button[.//span[contains(text(), 'Settings')]]"))
                     )
-                    settings_button.click()
+                    driver.execute_script("arguments[0].click();", settings_button)
                     logger.info("Clicked on 'Settings' button.")
 
                     logger.info("Locating maximum movie size select element in 'Settings'.")
@@ -244,11 +246,13 @@ async def initialize_browser():
                     default_filter_input.clear()  # Clear any existing filter
 
                     # Use the regex from .env
-                    default_filter_input.send_keys(TORRENT_FILTER_REGEX)
-
+                    # default_filter_input.send_keys(TORRENT_FILTER_REGEX)
+                    driver.execute_script("arguments[0].value = arguments[1];",default_filter_input,TORRENT_FILTER_REGEX)
+                    time.sleep(5)
                     logger.info(f"Inserted regex into 'Default torrents filter' input box: {TORRENT_FILTER_REGEX}")
 
-                    settings_button.click()
+                    # Close settings (save changes) using JS click as well
+                    driver.execute_script("arguments[0].click();", settings_button)
                     logger.info("Closed 'Settings' to save settings.")
 
                 except (TimeoutException, NoSuchElementException) as ex:
@@ -259,18 +263,30 @@ async def initialize_browser():
                 logger.info("Navigating to the library section.")
                 driver.get("https://debridmediamanager.com/library")
 
-                # Wait for 2 seconds on the library page before further processing
+                # Wait for library container to appear
                 try:
-                    # Ensure the library page has loaded correctly (e.g., wait for a specific element on the library page)
-                    library_element = WebDriverWait(driver, 2).until(
-                        EC.presence_of_element_located((By.XPATH, "//div[@id='library-content']"))  # Adjust the XPath as necessary
+                    library_element = WebDriverWait(driver, 10).until(
+                        EC.presence_of_element_located((By.XPATH, "//button[@title='Refresh library']"))
                     )
                     logger.info("Library section loaded successfully.")
-                except TimeoutException:
-                    logger.info("Library loading.")
 
-                # Wait for at least 2 seconds on the library page
-                logger.info("Waiting for 2 seconds on the library page.")
+                    # --- NEW: Click the refresh button ---
+                    try:
+                        refresh_button = WebDriverWait(driver, 10).until(
+                            EC.element_to_be_clickable((By.XPATH, "//button[@title='Refresh library']"))
+                        )
+                        driver.execute_script("arguments[0].scrollIntoView(true);", refresh_button)
+                        time.sleep(5)  # short delay for safety
+                        driver.execute_script("arguments[0].click();", refresh_button)
+                        logger.info("Clicked 'Refresh library' button.")
+                    except TimeoutException:
+                        logger.warning("Could not find 'Refresh library' button – skipping.")
+
+                except TimeoutException:
+                    logger.warning("Library section did not fully load.")
+
+                # Wait a bit to allow refresh to complete
+                logger.info("Waiting for 2 seconds after refresh.")
                 time.sleep(2)
                 logger.info("Completed waiting on the library page.")
                 
@@ -333,14 +349,14 @@ async def shutdown_browser():
 def login(driver):
     """Handle login to Debrid Media Manager."""
     logger.info("Initiating login process.")
-
+    time.sleep(5)
     try:
         # Check if the "Login with Real Debrid" button exists and is clickable
         login_button = WebDriverWait(driver, 5).until(
             EC.element_to_be_clickable((By.XPATH, "//button[contains(text(),'Login with Real Debrid')]"))
         )
         if login_button:
-            login_button.click()
+            driver.execute_script("arguments[0].click();", login_button)
             logger.info("Clicked on 'Login with Real Debrid' button.")
         else:
             logger.info("'Login with Real Debrid' button was not found. Skipping this step.")
