@@ -6,6 +6,7 @@ import time
 import json
 import os
 import asyncio
+import re
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -129,7 +130,7 @@ def search_on_debrid(imdb_id, movie_title, media_type, driver, extra_data=None):
                 logger.info(f"Status message: {status_text}")
 
                 # Extract the number of available torrents from the status message (look for the number)
-                import re
+                
                 torrents_match = re.search(r"Found (\d+) available torrents in RD", status_text)
                 if torrents_match:
                     torrents_count = int(torrents_match.group(1))
